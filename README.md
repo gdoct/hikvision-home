@@ -1,7 +1,7 @@
 # hikvision-home
 
 Two small self-hosted apps for a Hikvision intercom at a gate or front door:
-one app to monitor the house cameras, and open or close the gate. And a second app is responsible for handing out QR codes to people who should be
+one app to monitor the house cameras, and open or close the gate when either a button is pressed in the app, or when a valid qr code is shown to the camera. The second app is responsible for handing out QR codes to people who should be
 able to let themselves in. So you can generate a qr code for a visitor with time or date restrictions, and if they hold it in front of the intercom and it is valid, the gate will open.
 
 No cloud, no vendor app, no account. Everything runs in Docker on your own
@@ -13,6 +13,11 @@ box, and the credentials for your door hardware never leave it.
 | --- | --- |
 | [`intercom/`](intercom) | A phone-friendly page with live video from the intercom and up to two more cameras, and one hold-to-open gate button. Every press is logged. |
 | [`gatekeys/`](gatekeys) | Issues printable QR codes that open the gate on a schedule — "Tuesdays 07:15–13:00 until March" — and answers the intercom app's one question: *may this code open the gate right now?* |
+
+<img width="611" height="966" alt="intercom app" src="https://github.com/user-attachments/assets/4ae6e7fc-3d99-4805-a862-4a5832fbfbb0" />
+
+<img width="1012" height="924" alt="qr code app" src="https://github.com/user-attachments/assets/329381fe-06a6-468a-a0de-5703f1a5b352" />
+
 
 They are independent. Run `intercom` on its own and you have the camera view
 and the button; add `gatekeys` when you want codes. If `gatekeys` is down,
