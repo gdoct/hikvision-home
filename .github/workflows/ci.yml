@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [intercom, gatekeys]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the image
+        run: docker build -t ${{ matrix.app }}:ci ${{ matrix.app }}
+
+      # The app imports at build time only in the sense that a typo in a
+      # module is not found until something imports it. Do that here.
+      - name: Import the app
+        run: |
+          docker run --rm \
+            -e INTERCOM_HOST=192.0.2.10 \
+            -e INTERCOM_USER=ci -e INTERCOM_PASSWORD=ci \
+            -e GATEKEYS_USER=ci -e GATEKEYS_PASSWORD=ci \
+            -e GATEKEYS_SECRET_KEY=ci -e GATEKEYS_VERIFY_TOKEN=ci \
+            -e GATEKEYS_DB=/tmp/ci.db -e GATE_LOG_PATH=/tmp/gate.log \
+            ${{ matrix.app }}:ci python -c "import app.main; print('imported ok')"
+
+      - name: Answer a health check
+        run: |
+          docker run -d --name ci-${{ matrix.app }} -p 8080:${{ matrix.app == 'intercom' && '8099' || '8097' }} \
+            -e INTERCOM_HOST=192.0.2.10 \
+            -e INTERCOM_USER=ci -e INTERCOM_PASSWORD=ci \
+            -e GATEKEYS_USER=ci -e GATEKEYS_PASSWORD=ci \
+            -e GATEKEYS_SECRET_KEY=ci -e GATEKEYS_VERIFY_TOKEN=ci \
+            ${{ matrix.app }}:ci
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:8080/api/health && break
+            sleep 1
+          done
+          curl -sf http://localhost:8080/api/health
+          curl -sf -o /dev/null http://localhost:8080/
+          docker rm -f ci-${{ matrix.app }}
+
+  scripts:
+    name: shell and compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell syntax
+        run: |
+          bash -n build.sh
+          bash -n intercom/tools/npm-proxy-host.sh
+
+      - name: Compose files are valid
+        run: |
+          for app in intercom gatekeys; do
+            cp "$app/.env.example" "$app/.env"
+          done
+          # Values the examples deliberately leave empty, so interpolation
+          # has something to work with.
+          cat >> intercom/.env <<'EOF'
+          INTERCOM_USER=ci
+          INTERCOM_PASSWORD=ci
+          EOF
+          cat >> gatekeys/.env <<'EOF'
+          GATEKEYS_USER=ci
+          GATEKEYS_PASSWORD=ci
+          GATEKEYS_SECRET_KEY=ci
+          GATEKEYS_VERIFY_TOKEN=ci
+          EOF
+          for app in intercom gatekeys; do
+            ( cd "$app" && docker compose config >/dev/null )
+          done
+
+      - name: No secrets in the tree
+        run: |
+          # .env files must never be committed; the examples must stay empty
+          # where they matter.
+          if git ls-files | grep -E '(^|/)\.env$'; then
+            echo "a .env file is committed" >&2
+            exit 1
+          fi

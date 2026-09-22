@@ -1,0 +1,42 @@
+# go2rtc config for the camera streams. ${VAR} values come from the container
+# environment (docker-compose.yml → .env). Never put credentials in this file.
+log:
+  level: info
+
+api:
+  # Reachable only from the intercom compose bridge; see docker-compose.yml.
+  # The go2rtc API hands out stream URLs with the credentials in them, so it
+  # must never listen on the LAN.
+  listen: "${GO2RTC_BIND}:1984"
+
+rtsp:
+  listen: "127.0.0.1:8554"
+
+webrtc:
+  # Not used (the page plays MSE over WebSocket). Kept so WebRTC can be
+  # enabled later without re-plumbing.
+  listen: ":8555"
+
+streams:
+  # --- camera slots -------------------------------------------------------
+  # Slot 1 is the intercom and is always defined. Slots 2 and 3 are optional:
+  # with CAMERA<n>_HOST unset, docker-compose.yml passes a placeholder host,
+  # the stream is never requested by the app and go2rtc never connects to it.
+  #
+  # To add a fourth camera: copy a block below, add CAMERA4_* to .env and to
+  # docker-compose.yml, and set MAX_CAMERAS=4. Note that the page's grid is
+  # laid out for up to three.
+  intercom:
+    - "rtsp://${INTERCOM_USER}:${INTERCOM_PASSWORD}@${INTERCOM_HOST}:554${RTSP_PATH}"
+    # MJPEG fallback for browsers without Media Source Extensions, and the
+    # source the QR scanner decodes. go2rtc only starts this ffmpeg transcode
+    # while an MJPEG viewer is connected.
+    - "ffmpeg:intercom#video=mjpeg"
+
+  camera2:
+    - "rtsp://${CAMERA2_USER}:${CAMERA2_PASSWORD}@${CAMERA2_HOST}:${CAMERA2_RTSP_PORT}${CAMERA2_RTSP_PATH}"
+    - "ffmpeg:camera2#video=mjpeg"
+
+  camera3:
+    - "rtsp://${CAMERA3_USER}:${CAMERA3_PASSWORD}@${CAMERA3_HOST}:${CAMERA3_RTSP_PORT}${CAMERA3_RTSP_PATH}"
+    - "ffmpeg:camera3#video=mjpeg"

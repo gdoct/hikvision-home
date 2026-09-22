@@ -1,0 +1,145 @@
+# Runtime definition for intercom — see README.md and ../docs/ARCHITECTURE.md.
+#
+# Two services:
+#   go2rtc        pulls RTSP from the cameras and repackages it for browsers.
+#                 Host network, so WebRTC can be added later without
+#                 re-plumbing. Its API is bound to the gateway address of the
+#                 compose bridge below, so only intercom-app can reach it —
+#                 that API would otherwise hand the stream URL, credentials
+#                 included, to anything on the LAN.
+#   intercom-app  the page, the stream proxy and the gate endpoint. The only
+#                 thing that holds the intercom's credentials.
+#
+# Settings come from .env (see .env.example). Keep .env 0600; it is ignored
+# by git and must never be committed.
+name: intercom
+
+services:
+  go2rtc:
+    image: alexxit/go2rtc:latest
+    container_name: intercom-go2rtc
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      INTERCOM_HOST: ${INTERCOM_HOST:?set INTERCOM_HOST in .env}
+      INTERCOM_USER: ${INTERCOM_USER:?set INTERCOM_USER in .env}
+      INTERCOM_PASSWORD: ${INTERCOM_PASSWORD:?set INTERCOM_PASSWORD in .env}
+      RTSP_PATH: ${RTSP_PATH:-/Streaming/Channels/101}
+      GO2RTC_BIND: ${GO2RTC_BIND:-172.30.9.1}
+      # --- camera slots ---------------------------------------------------
+      # Optional extra cameras; the login defaults to the intercom's. An
+      # unset slot gets a placeholder host that is never connected to,
+      # because the app only ever asks for cameras it knows about.
+      CAMERA2_HOST: ${CAMERA2_HOST:-127.0.0.1}
+      CAMERA2_USER: ${CAMERA2_USER:-${INTERCOM_USER}}
+      CAMERA2_PASSWORD: ${CAMERA2_PASSWORD:-${INTERCOM_PASSWORD}}
+      CAMERA2_RTSP_PATH: ${CAMERA2_RTSP_PATH:-/Streaming/Channels/101}
+      CAMERA2_RTSP_PORT: ${CAMERA2_RTSP_PORT:-554}
+      CAMERA3_HOST: ${CAMERA3_HOST:-127.0.0.1}
+      CAMERA3_USER: ${CAMERA3_USER:-${INTERCOM_USER}}
+      CAMERA3_PASSWORD: ${CAMERA3_PASSWORD:-${INTERCOM_PASSWORD}}
+      CAMERA3_RTSP_PATH: ${CAMERA3_RTSP_PATH:-/Streaming/Channels/101}
+      CAMERA3_RTSP_PORT: ${CAMERA3_RTSP_PORT:-554}
+    volumes:
+      - ./go2rtc.yaml:/config/go2rtc.yaml:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  intercom-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: intercom-app:latest
+    container_name: intercom-app
+    restart: unless-stopped
+    depends_on:
+      - go2rtc
+    networks:
+      - intercom
+    ports:
+      # BIND_ADDR is the host address to publish on. On a host with an
+      # interface on the camera network, set it to the trusted LAN address so
+      # this never appears on the camera side. 0.0.0.0 publishes everywhere.
+      - "${BIND_ADDR:-0.0.0.0}:${PORT:-8099}:8099"
+    environment:
+      INTERCOM_HOST: ${INTERCOM_HOST:?set INTERCOM_HOST in .env}
+      INTERCOM_USER: ${INTERCOM_USER:?set INTERCOM_USER in .env}
+      INTERCOM_PASSWORD: ${INTERCOM_PASSWORD:?set INTERCOM_PASSWORD in .env}
+      INTERCOM_DOOR_ID: ${INTERCOM_DOOR_ID:-1}
+      RTSP_PATH: ${RTSP_PATH:-/Streaming/Channels/101}
+      GATE_COOLDOWN_SECONDS: ${GATE_COOLDOWN_SECONDS:-5}
+      GO2RTC_URL: http://${GO2RTC_BIND:-172.30.9.1}:1984
+      GATE_LOG_PATH: /data/gate.log
+      # Shown in the browser tab and on the phone's home screen.
+      SITE_NAME: ${SITE_NAME:-Gate}
+      INTERCOM_NAME: ${INTERCOM_NAME:-Gate intercom}
+      # --- camera slots ---------------------------------------------------
+      MAX_CAMERAS: ${MAX_CAMERAS:-3}
+      CAMERA2_HOST: ${CAMERA2_HOST:-}
+      CAMERA2_NAME: ${CAMERA2_NAME:-Camera 2}
+      CAMERA3_HOST: ${CAMERA3_HOST:-}
+      CAMERA3_NAME: ${CAMERA3_NAME:-Camera 3}
+      # QR scanner (app/qr.py). Optional: it scans only while Frigate reports
+      # a person at the gate, and with MQTT unset or down it stays off. A
+      # decoded code is checked with gatekeys before anything opens.
+      MQTT_HOST: ${MQTT_HOST:-}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_USER: ${MQTT_USER:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+      QR_FRIGATE_CAMERA: ${QR_FRIGATE_CAMERA:-gate}
+      QR_SCAN_FPS: ${QR_SCAN_FPS:-8}
+      QR_LINGER_SECONDS: ${QR_LINGER_SECONDS:-90}
+      # A tracked person Frigate has said nothing about for this long is
+      # presumed gone, and the same code is not logged twice within this
+      # window.
+      QR_STALE_SECONDS: ${QR_STALE_SECONDS:-300}
+      QR_REPEAT_SECONDS: ${QR_REPEAT_SECONDS:-30}
+      # Keep the last N frames seen with someone at the gate, for debugging a
+      # code that did not read. 0 = off, and off is the right default: those
+      # frames are stills of whoever stands at your gate.
+      QR_DEBUG_FRAMES: ${QR_DEBUG_FRAMES:-0}
+      QR_LOG_PATH: /data/qr.log
+      # gatekeys (../gatekeys) decides whether a code may open the gate.
+      # QR_ACTION=log keeps the verdict in the log without opening anything.
+      GATEKEYS_URL: ${GATEKEYS_URL:-}
+      GATEKEYS_TOKEN: ${GATEKEYS_TOKEN:-}
+      QR_ACTION: ${QR_ACTION:-open}
+      # Local time in gate.log, so "ten past two" means what you think.
+      TZ: ${TZ:-UTC}
+    volumes:
+      - intercom-data:/data
+    # The image ships neither curl nor wget, so probe with the interpreter the
+    # app already runs on.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen("http://localhost:8099/api/health")
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  # Fixed subnet so go2rtc (host network) can bind its API to this bridge's
+  # gateway address and be reachable from intercom-app but from nothing else.
+  # Change GO2RTC_BIND and this block together if 172.30.9.0/24 is taken.
+  intercom:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.9.0/24
+          gateway: 172.30.9.1
+
+volumes:
+  # Holds gate.log — the only record of who opened the gate.
+  intercom-data:

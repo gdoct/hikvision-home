@@ -1,0 +1,28 @@
+# Secrets. These hold the credentials that open a gate — never commit them.
+.env
+*.env
+!.env.example
+.npm-admin
+
+# Runtime data that only exists on a running host.
+*.db
+*.db-wal
+*.db-shm
+*.log
+qr-frames/
+gate-qr-test.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+.DS_Store

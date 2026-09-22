@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1216">
+<title>Gate keys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap">
+<style>
+  /* Same Industry tokens as ../intercom, so the two pages read as one system. */
+  :root {
+    --color-bg: #0d1216; --color-surface: #12181d; --color-surface-2: #172026;
+    --color-text: #fff; --color-text-muted: rgba(255,255,255,.62); --color-text-faint: rgba(255,255,255,.45);
+    --color-line: rgba(255,255,255,.2); --color-line-strong: rgba(255,255,255,.32);
+    --color-accent: #5980a6; --color-accent-400: #94bce3; --color-accent-900: #1d2d3d;
+    --color-ok: #7fb08a; --color-warn: #d8b36a; --color-alert: #e08a8a;
+    --font-heading: "Barlow Condensed", system-ui, sans-serif;
+    --font-body: "Barlow", system-ui, sans-serif;
+    --font-mono: ui-monospace, Menlo, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: var(--color-bg); color: var(--color-text);
+         font: 400 15px/1.55 var(--font-body); -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: var(--font-heading); font-weight: 600; letter-spacing: .02em; margin: 0; }
+  .kicker { font: 600 12px/1 var(--font-heading); letter-spacing: .16em; text-transform: uppercase; color: var(--color-text-muted); }
+  .mono { font: 400 12px/1.4 var(--font-mono); }
+  a { color: var(--color-accent-400); }
+  header { display: flex; align-items: baseline; gap: 16px; padding: 22px 20px 14px; border-bottom: 1px solid var(--color-line); }
+  header h1 { font-size: 26px; text-transform: uppercase; letter-spacing: .06em; }
+  main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+  section { margin-bottom: 28px; }
+  button, input, select, textarea {
+    font: inherit; color: inherit; background: var(--color-surface-2);
+    border: 1px solid var(--color-line); border-radius: 0; padding: 7px 10px;
+  }
+  button { cursor: pointer; background: transparent; border-color: var(--color-line-strong); }
+  button:hover { border-color: var(--color-accent-400); color: var(--color-accent-400); }
+  button.primary { background: var(--color-accent); border-color: var(--color-accent); color: #08131d; font-weight: 600; }
+  button.primary:hover { background: var(--color-accent-400); border-color: var(--color-accent-400); color: #08131d; }
+  button.danger:hover { border-color: var(--color-alert); color: var(--color-alert); }
+  label { display: block; font: 600 11px/1.4 var(--font-heading); letter-spacing: .14em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 4px; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .card { border: 1px solid var(--color-line); background: var(--color-surface); padding: 16px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--color-line); vertical-align: top; }
+  th { font: 600 11px/1.4 var(--font-heading); letter-spacing: .14em; text-transform: uppercase; color: var(--color-text-muted); }
+  .state { font: 600 11px/1 var(--font-heading); letter-spacing: .1em; text-transform: uppercase; padding: 4px 7px; border: 1px solid; display: inline-block; white-space: nowrap; }
+  .state.open { color: var(--color-ok); border-color: var(--color-ok); }
+  .state.wait { color: var(--color-warn); border-color: var(--color-warn); }
+  .state.dead { color: var(--color-alert); border-color: var(--color-alert); }
+  .muted { color: var(--color-text-muted); }
+  .faint { color: var(--color-text-faint); }
+  .win { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .days { display: flex; gap: 4px; flex-wrap: wrap; }
+  .days input { display: none; }
+  .days span { display: inline-block; padding: 5px 8px; border: 1px solid var(--color-line); font: 600 11px/1 var(--font-heading); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; user-select: none; }
+  .days input:checked + span { background: var(--color-accent-900); border-color: var(--color-accent); color: var(--color-accent-400); }
+  dialog { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-line-strong); max-width: 720px; width: 94%; }
+  dialog::backdrop { background: rgba(0,0,0,.7); }
+  .hidden { display: none !important; }
+  .error { color: var(--color-alert); }
+  .qr { background: #fff; padding: 8px; display: inline-block; }
+  @media (max-width: 640px) { th:nth-child(4), td:nth-child(4) { display: none; } }
+</style>
+</head>
+<body>
+
+<div id="login" class="hidden">
+  <header><h1>Gate keys</h1><span class="kicker">sign in</span></header>
+  <main>
+    <form class="card" style="max-width:360px" onsubmit="doLogin(event)">
+      <div style="margin-bottom:12px"><label for="u">User</label><input id="u" autocomplete="username" style="width:100%"></div>
+      <div style="margin-bottom:16px"><label for="p">Password</label><input id="p" type="password" autocomplete="current-password" style="width:100%"></div>
+      <button class="primary" type="submit">Sign in</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </main>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>Gate keys</h1>
+    <span class="kicker" id="summary"></span>
+    <span style="margin-left:auto" class="row">
+      <button onclick="openEditor()">New key</button>
+      <button onclick="doLogout()">Sign out</button>
+    </span>
+  </header>
+  <main>
+    <section>
+      <table>
+        <thead><tr><th>Name</th><th>Code</th><th>When</th><th>Uses</th><th>State</th><th></th></tr></thead>
+        <tbody id="keys"></tbody>
+      </table>
+      <p id="empty" class="muted hidden">No keys yet. "New key" makes the first one.</p>
+    </section>
+
+    <section>
+      <h2 class="kicker" style="margin-bottom:10px">Recent attempts</h2>
+      <table><thead><tr><th>When</th><th>Key</th><th>Result</th><th>Source</th></tr></thead>
+      <tbody id="events"></tbody></table>
+    </section>
+  </main>
+</div>
+
+<dialog id="editor">
+  <form method="dialog" onsubmit="return false">
+    <h2 id="editor-title" style="margin-bottom:14px">New key</h2>
+    <div class="grid">
+      <div><label for="f-name">Name</label><input id="f-name" style="width:100%" placeholder="Cleaner Ana"></div>
+      <div><label for="f-from">Valid from</label><input id="f-from" type="date" style="width:100%"></div>
+      <div><label for="f-to">Valid to</label><input id="f-to" type="date" style="width:100%"></div>
+      <div><label for="f-max">Max uses (blank = unlimited)</label><input id="f-max" type="number" min="1" style="width:100%"></div>
+      <div><label for="f-cool">Cooldown (seconds)</label><input id="f-cool" type="number" min="0" value="10" style="width:100%"></div>
+    </div>
+    <div style="margin-top:12px"><label for="f-note">Note</label><textarea id="f-note" rows="2" style="width:100%"></textarea></div>
+
+    <h3 class="kicker" style="margin:18px 0 8px">Windows</h3>
+    <div id="windows"></div>
+    <button onclick="addWindow()">Add window</button>
+
+    <p id="editor-error" class="error"></p>
+    <div class="row" style="margin-top:16px; justify-content:flex-end">
+      <button onclick="closeEditor()">Cancel</button>
+      <button class="primary" onclick="saveKey()">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="qrbox">
+  <div style="text-align:center">
+    <h2 id="qr-name" style="margin-bottom:10px"></h2>
+    <div class="qr"><img id="qr-img" width="260" height="260" alt="QR code"></div>
+    <p class="mono" id="qr-token" style="letter-spacing:.08em"></p>
+    <p class="muted" id="qr-when"></p>
+    <div class="row" style="justify-content:center">
+      <a id="qr-pdf" class="row"><button>Download card (PDF)</button></a>
+      <button onclick="document.getElementById('qrbox').close()">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+let KEYS = [], editing = null;
+
+const times = (() => { const o = []; for (let m = 0; m <= 1440; m += 15)
+  o.push(String(Math.floor(m/60)).padStart(2,"0") + ":" + String(m%60).padStart(2,"0")); return o; })();
+
+async function api(path, options = {}) {
+  const r = await fetch(path, { credentials: "same-origin", headers: { "Content-Type": "application/json" }, ...options });
+  if (r.status === 401 && !path.includes("login")) { show("login"); throw new Error("login required"); }
+  const body = r.headers.get("content-type")?.includes("json") ? await r.json() : null;
+  if (!r.ok) throw new Error(body?.error || r.statusText);
+  return body;
+}
+function show(which) {
+  document.getElementById("login").classList.toggle("hidden", which !== "login");
+  document.getElementById("app").classList.toggle("hidden", which !== "app");
+}
+async function doLogin(e) {
+  e.preventDefault();
+  const err = document.getElementById("login-error"); err.textContent = "";
+  try {
+    await api("/api/login", { method: "POST", body: JSON.stringify({
+      username: document.getElementById("u").value, password: document.getElementById("p").value }) });
+    document.getElementById("p").value = "";
+    show("app"); refresh();
+  } catch (ex) { err.textContent = "Wrong username or password."; }
+}
+async function doLogout() { await api("/api/logout", { method: "POST" }); show("login"); }
+
+function stateClass(s) {
+  if (s === "open now") return "open";
+  if (s === "outside window" || s === "not yet valid") return "wait";
+  return "dead";
+}
+async function refresh() {
+  const data = await api("/api/keys");
+  KEYS = data.keys;
+  const tbody = document.getElementById("keys");
+  tbody.innerHTML = "";
+  for (const k of KEYS) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>${esc(k.name)}</strong>${k.note ? `<div class="faint">${esc(k.note)}</div>` : ""}</td>
+      <td class="mono">${esc(k.token)}<div class="faint">${k.valid_from} → ${k.valid_to}</div></td>
+      <td class="muted">${k.schedule_text.map(esc).join("<br>")}</td>
+      <td class="muted">${k.uses}${k.max_uses ? " / " + k.max_uses : ""}${k.last_used_at ? `<div class="faint">${esc(k.last_used_at.slice(0,16).replace("T"," "))}</div>` : ""}</td>
+      <td><span class="state ${stateClass(k.state)}">${esc(k.state)}</span>${k.next_opening ? `<div class="faint">next: ${esc(k.next_opening)}</div>` : ""}</td>
+      <td><div class="row">
+        <button onclick="showQr(${k.id})">QR</button>
+        <button onclick="openEditor(${k.id})">Edit</button>
+        <button onclick="toggleRevoke(${k.id})">${k.revoked ? "Restore" : "Revoke"}</button>
+        <button class="danger" onclick="removeKey(${k.id})">Delete</button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  }
+  document.getElementById("empty").classList.toggle("hidden", KEYS.length > 0);
+  const live = KEYS.filter(k => k.state === "open now").length;
+  document.getElementById("summary").textContent = `${KEYS.length} keys · ${live} open now`;
+
+  const ev = await api("/api/events?limit=40");
+  document.getElementById("events").innerHTML = ev.events.map(e => `
+    <tr><td class="mono">${esc(e.ts.slice(0,16).replace("T"," "))}</td>
+        <td>${esc(e.name || e.token || "—")}</td>
+        <td class="${e.outcome === "valid" ? "" : "error"}">${esc(e.outcome === "valid" ? "opened" : "refused: " + (e.reason || ""))}</td>
+        <td class="faint">${esc(e.source || "")}</td></tr>`).join("");
+}
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+
+function windowRow(win) {
+  const div = document.createElement("div");
+  div.className = "win";
+  div.innerHTML = `
+    <div class="days">${DAYS.map((d, i) => `
+      <label><input type="checkbox" value="${i}" ${win?.weekdays?.includes(i) ? "checked" : ""}><span>${d}</span></label>`).join("")}</div>
+    <select class="start">${times.map(t => `<option ${win?.start === t ? "selected" : ""}>${t}</option>`).join("")}</select>
+    <select class="end">${times.map(t => `<option ${win?.end === t ? "selected" : ""}>${t}</option>`).join("")}</select>
+    <button onclick="this.parentElement.remove()">✕</button>`;
+  if (!win) { div.querySelector(".start").value = "08:00"; div.querySelector(".end").value = "18:00"; }
+  return div;
+}
+function addWindow(win) { document.getElementById("windows").appendChild(windowRow(win)); }
+
+function openEditor(id) {
+  editing = id ? KEYS.find(k => k.id === id) : null;
+  document.getElementById("editor-title").textContent = editing ? "Edit key" : "New key";
+  document.getElementById("editor-error").textContent = "";
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById("f-name").value = editing?.name || "";
+  document.getElementById("f-note").value = editing?.note || "";
+  document.getElementById("f-from").value = editing?.valid_from || today;
+  document.getElementById("f-to").value = editing?.valid_to || today;
+  document.getElementById("f-max").value = editing?.max_uses || "";
+  document.getElementById("f-cool").value = editing?.cooldown_seconds ?? 10;
+  const box = document.getElementById("windows"); box.innerHTML = "";
+  // Group the flat (weekday, start, end) rows back into one line per time pair.
+  const groups = {};
+  for (const w of editing?.windows || []) (groups[w.start + w.end] ||= { start: w.start, end: w.end, weekdays: [] }).weekdays.push(w.weekday);
+  const list = Object.values(groups);
+  if (list.length) list.forEach(addWindow); else addWindow();
+  document.getElementById("editor").showModal();
+}
+function closeEditor() { document.getElementById("editor").close(); }
+
+function collectWindows() {
+  return [...document.querySelectorAll("#windows .win")].map(row => ({
+    weekdays: [...row.querySelectorAll("input:checked")].map(i => Number(i.value)),
+    start: row.querySelector(".start").value,
+    end: row.querySelector(".end").value,
+  }));
+}
+async function saveKey() {
+  const err = document.getElementById("editor-error"); err.textContent = "";
+  const max = document.getElementById("f-max").value;
+  const body = {
+    name: document.getElementById("f-name").value.trim(),
+    note: document.getElementById("f-note").value.trim(),
+    valid_from: document.getElementById("f-from").value,
+    valid_to: document.getElementById("f-to").value,
+    max_uses: max ? Number(max) : null,
+    cooldown_seconds: Number(document.getElementById("f-cool").value || 0),
+    windows: collectWindows(),
+  };
+  if (!body.name) { err.textContent = "A name makes the list readable later."; return; }
+  try {
+    if (editing) {
+      await api(`/api/keys/${editing.id}`, { method: "PATCH", body: JSON.stringify({ ...body, clear_max_uses: !max }) });
+    } else {
+      await api("/api/keys", { method: "POST", body: JSON.stringify(body) });
+    }
+    closeEditor(); refresh();
+  } catch (ex) { err.textContent = ex.message; }
+}
+async function toggleRevoke(id) {
+  const k = KEYS.find(x => x.id === id);
+  await api(`/api/keys/${id}`, { method: "PATCH", body: JSON.stringify({ revoked: !k.revoked }) });
+  refresh();
+}
+async function removeKey(id) {
+  const k = KEYS.find(x => x.id === id);
+  if (!confirm(`Delete "${k.name}"? The code stops working immediately. Its history stays in the log.`)) return;
+  await api(`/api/keys/${id}`, { method: "DELETE" });
+  refresh();
+}
+function showQr(id) {
+  const k = KEYS.find(x => x.id === id);
+  document.getElementById("qr-name").textContent = k.name;
+  document.getElementById("qr-img").src = `/api/keys/${id}/qr.png`;
+  document.getElementById("qr-token").textContent = k.token;
+  document.getElementById("qr-when").textContent = k.schedule_text.join(" · ") + ` · ${k.valid_from} → ${k.valid_to}`;
+  document.getElementById("qr-pdf").href = `/api/keys/${id}/card.pdf`;
+  document.getElementById("qrbox").showModal();
+}
+
+(async () => {
+  const s = await api("/api/session");
+  if (s.logged_in) { show("app"); refresh(); setInterval(refresh, 30000); } else show("login");
+})();
+</script>
+</body>
+</html>

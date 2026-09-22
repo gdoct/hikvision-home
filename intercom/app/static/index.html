@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0d1216">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="__SITE_NAME__">
+<link rel="manifest" href="/manifest.webmanifest?v=2">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<title>__SITE_NAME__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap">
+<style>
+  /* Tokens from the Industry design system (styles.css), dark ground as in
+     the "Gate & Cameras" design. Every color, font and spacing below reads
+     from these. */
+  :root {
+    --color-bg: #0d1216;
+    --color-surface: #12181d;
+    --color-text: #ffffff;
+    --color-text-muted: rgba(255,255,255,.6);
+    --color-text-faint: rgba(255,255,255,.55);
+    --color-line: rgba(255,255,255,.2);
+    --color-line-strong: rgba(255,255,255,.3);
+    --color-accent: #5980a6;
+    --color-accent-400: #94bce3;
+    --color-accent-600: #597ea3;
+    --color-accent-700: #416180;
+    --color-accent-900: #1d2d3d;
+    --color-paper: #f2f2f3;
+    --color-alert: #e08a8a;
+
+    --font-heading: "Barlow Condensed", system-ui, sans-serif;
+    --font-heading-weight: 600;
+    --font-body: "Barlow", system-ui, sans-serif;
+    --font-mono: ui-monospace, Menlo, monospace;
+
+    --space-1: 3.4px;
+    --space-2: 6.8px;
+    --space-3: 10.2px;
+    --space-4: 13.6px;
+    --space-6: 20.4px;
+    --space-8: 27.2px;
+
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font: 400 15px/1.55 var(--font-body);
+    display: flex; flex-direction: column;
+    height: 100dvh; overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus { outline: none; }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+  .kicker {
+    font: var(--font-heading-weight) 13px/1 var(--font-heading);
+    letter-spacing: .16em; text-transform: uppercase;
+  }
+  .mono { font: 400 11px/1.4 var(--font-mono); color: var(--color-text-muted); }
+
+  /* — header — */
+  header {
+    padding: calc(var(--safe-top) + var(--space-4)) 16px var(--space-3);
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+    min-height: calc(var(--safe-top) + 58px);
+  }
+  header h1 { margin: 0; color: var(--color-text); }
+  .hright { display: flex; align-items: center; gap: var(--space-2); }
+  .live {
+    display: inline-flex; align-items: center; gap: 7px;
+    font: var(--font-heading-weight) 11px/1 var(--font-heading);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--color-accent-400);
+  }
+  .live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent-400); }
+  .live[data-state="connecting"] { color: var(--color-text-faint); }
+  .live[data-state="connecting"] .dot { background: var(--color-text-faint); animation: blink 1s infinite; }
+  .live[data-state="down"] { color: var(--color-alert); }
+  .live[data-state="down"] .dot { background: var(--color-alert); }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  /* — buttons (Industry .btn) — */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer; text-decoration: none;
+    font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+    font-size: 13px; line-height: 1.2; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--color-text);
+    background: transparent; border: 1px solid var(--color-line-strong); border-radius: 0;
+    padding: var(--space-2) calc(var(--space-3) * 1.2);
+  }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-ghost { color: var(--color-accent-400); border-color: var(--color-line); height: 34px; padding: 0 12px; font-size: 11px; }
+  .btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+  .btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+  .btn-primary { background: var(--color-accent); color: var(--color-paper); border-color: var(--color-accent); }
+  .btn-primary:hover { background: var(--color-accent-600); }
+  .btn-primary:active { background: var(--color-accent-700); }
+  .hidden { display: none !important; }
+
+  /* — blueprint frame: registration marks at the corners — */
+  .blueprint { position: relative; border: 1px solid var(--color-line); border-radius: 0; }
+  .blueprint > .corner { position: absolute; width: 11px; height: 11px; color: rgba(255,255,255,.75); z-index: 2; }
+  .blueprint > .corner::before, .blueprint > .corner::after { content: ""; position: absolute; background: currentColor; }
+  .blueprint > .corner::before { left: 5px; top: 0; width: 1px; height: 100%; }
+  .blueprint > .corner::after  { top: 5px; left: 0; width: 100%; height: 1px; }
+  .blueprint > .corner.tl { top: -6px; left: -6px; }
+  .blueprint > .corner.tr { top: -6px; right: -6px; }
+  .blueprint > .corner.bl { bottom: -6px; left: -6px; }
+  .blueprint > .corner.br { bottom: -6px; right: -6px; }
+
+  /* — camera cells — */
+  .cells {
+    flex: 1; min-height: 0; padding: 0 16px;
+    display: grid; gap: 8px; grid-auto-rows: 1fr;
+  }
+  .cells[data-count="2"] { grid-template-rows: 1.25fr 1fr; }
+  .cells[data-count="3"] { grid-template-rows: 1.25fr 1fr 1fr; }
+  .cells.filled { grid-template-rows: 1fr; }
+  .cells.filled .cell:not(.active) { display: none; }
+  .cells.filled { touch-action: pan-y pinch-zoom; }   /* sideways swipes are ours */
+  .cell {
+    position: relative; min-height: 0; margin: 0;
+    background: var(--color-accent-900); border: 1px solid var(--color-line);
+    cursor: pointer; overflow: hidden;
+  }
+  .cell .grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .cell video, .cell img.mjpeg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: contain; display: block; background: transparent;
+  }
+  .cell .name {
+    position: absolute; left: 10px; top: 9px; display: flex; gap: 7px; align-items: center; z-index: 1;
+    font: var(--font-heading-weight) 11px/1 var(--font-heading); letter-spacing: .14em; text-transform: uppercase; color: var(--color-text);
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  }
+  .cell .name .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent-400); }
+  .cell[data-state="down"] .name .dot { background: var(--color-alert); }
+  .cell[data-state="connecting"] .name .dot { background: var(--color-text-faint); animation: blink 1s infinite; }
+  .cell .code {
+    position: absolute; right: 10px; bottom: 9px; z-index: 1;
+    font: 400 10px/1 var(--font-mono); color: rgba(255,255,255,.7); text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  }
+  .cell .overlay {
+    position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
+    gap: var(--space-2); text-align: center; padding: var(--space-6); z-index: 1;
+    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  }
+  .cell[data-state="down"] .overlay, .cell[data-state="connecting"] .overlay { display: flex; }
+  .cell .overlay .kicker { color: var(--color-text); }
+  .cell[data-state="down"] .overlay .kicker { color: var(--color-alert); }
+  .cell .overlay .mono { max-width: 34ch; }
+
+  /* — actions — */
+  .actions { padding: var(--space-4) 16px var(--space-3); display: flex; gap: 10px; }
+  .gate {
+    --p: 0;
+    flex: 1; height: 46px; overflow: visible; touch-action: none;
+    transition: background .2s, color .2s, border-color .2s, transform .08s;
+  }
+  .gate .fill {
+    position: absolute; inset: 0; background: var(--color-accent-400);
+    transform: scaleX(var(--p)); transform-origin: left center; transition: transform .05s linear;
+  }
+  .gate > .label { position: relative; z-index: 1; }
+  .gate[data-state="holding"] { transform: scale(.985); }
+  .gate[data-state="pending"] { background: var(--color-accent-400); border-color: var(--color-accent-400); color: var(--color-accent-900); }
+  .gate[data-state="sent"] { background: var(--color-accent-400); border-color: var(--color-accent-400); color: var(--color-accent-900); }
+  .gate[data-state="cooldown"] { background: transparent; color: var(--color-text-faint); border-color: var(--color-line); cursor: default; }
+  .gate[data-state="failed"] { background: transparent; color: var(--color-alert); border-color: var(--color-alert); }
+  .gate[data-state="failed"] > .corner { color: var(--color-alert); }
+  .gate[data-state="pending"] .fill, .gate[data-state="sent"] .fill, .gate[data-state="cooldown"] .fill, .gate[data-state="failed"] .fill { display: none; }
+
+  .statusline { padding: 0 16px calc(var(--safe-bottom) + 22px); display: grid; gap: 2px; }
+  .statusline .detail { color: var(--color-text-faint); min-height: 15px; }
+  .statusline .detail[data-kind="error"] { color: var(--color-alert); }
+  .statusline .detail[data-kind="ok"] { color: var(--color-accent-400); }
+
+  /* — immersive: phone on its side. The active camera takes the whole
+     screen; the gate button and status line float over it. Not in the
+     design (portrait only), so it reuses the same parts. — */
+  .pager { display: none; }
+  body.immersive header { display: none; }
+  body.immersive .cells { position: fixed; inset: 0; padding: 0; gap: 0; }
+  body.immersive .cell { border: 0; background: var(--color-bg); cursor: default; }
+  body.immersive .cell .name { left: calc(var(--safe-left) + 16px); top: calc(var(--safe-top) + 14px); }
+  body.immersive .cell .code { right: calc(var(--safe-right) + 16px); top: calc(var(--safe-top) + 14px); bottom: auto; }
+  body.immersive::after {
+    content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 110px; z-index: 5; pointer-events: none;
+    background: linear-gradient(transparent, color-mix(in srgb, var(--color-bg) 75%, transparent));
+  }
+  body.immersive .actions {
+    position: fixed; z-index: 6; padding: 0; width: min(240px, 40vw);
+    right: calc(var(--safe-right) + 16px); bottom: calc(var(--safe-bottom) + 16px);
+  }
+  body.immersive .statusline {
+    position: fixed; z-index: 6; padding: 0;
+    left: calc(var(--safe-left) + 16px); bottom: calc(var(--safe-bottom) + 16px);
+    right: calc(var(--safe-right) + min(240px, 40vw) + 32px);
+    text-shadow: 0 1px 2px rgba(0,0,0,.7);
+  }
+  body.immersive .statusline .mono { color: var(--color-text); }
+  body.immersive .statusline .detail { min-height: 0; }
+  body.immersive .statusline .detail[data-kind="error"] { color: var(--color-alert); }
+  body.immersive .statusline .detail[data-kind="ok"] { color: var(--color-accent-400); }
+  body.immersive .pager {
+    display: flex; gap: 6px; position: fixed; z-index: 6;
+    top: calc(var(--safe-top) + 16px); left: 50%; transform: translateX(-50%);
+  }
+  .pager i { width: 6px; height: 6px; border: 1px solid rgba(255,255,255,.7); }
+  .pager i.on { background: var(--color-accent-400); border-color: var(--color-accent-400); }
+
+  /* swipe feedback: the next camera slides in; at the end of the row the
+     current one just gives a little. */
+  .cell.from-right { animation: from-right .18s ease-out; }
+  .cell.from-left { animation: from-left .18s ease-out; }
+  .cell.edge-right video, .cell.edge-right img.mjpeg { animation: edge-right .28s ease-out; }
+  .cell.edge-left video, .cell.edge-left img.mjpeg { animation: edge-left .28s ease-out; }
+  @keyframes from-right { from { transform: translateX(32px); opacity: 0; } }
+  @keyframes from-left { from { transform: translateX(-32px); opacity: 0; } }
+  @keyframes edge-right { 40% { transform: translateX(-14px); } }
+  @keyframes edge-left { 40% { transform: translateX(14px); } }
+
+  @media (prefers-reduced-motion: reduce) { .cell, .cell video, .cell img.mjpeg { animation: none !important; } .gate .fill { transition: none; } .live .dot, .cell .name .dot { animation: none; } }
+</style>
+</head>
+<body>
+  <header>
+    <h1 class="kicker" id="title">Gate intercom</h1>
+    <div class="hright">
+      <div class="live" id="live" data-state="connecting"><span class="dot"></span><span id="live-text">Connecting</span></div>
+      <button class="btn btn-ghost hidden" id="view-toggle">Grid</button>
+    </div>
+  </header>
+
+  <div class="cells" id="cells" data-count="1"></div>
+  <div class="pager" id="pager" aria-hidden="true"></div>
+
+  <div class="actions">
+    <button class="btn btn-primary blueprint gate" id="gate" data-state="idle" aria-label="Hold to open the gate">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <span class="fill"></span><span class="label" id="gate-label">Open gate</span>
+    </button>
+  </div>
+  <div class="statusline">
+    <div class="mono" id="statusline">GATE — READY · HOLD TO OPEN</div>
+    <div class="mono detail" id="detail" aria-live="polite"></div>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const live = $('live'), liveText = $('live-text');
+  const cellsEl = $('cells'), pager = $('pager'), viewToggle = $('view-toggle'), titleEl = $('title');
+  const gate = $('gate'), gateLabel = $('gate-label'), statusline = $('statusline'), detail = $('detail');
+
+  // ------------------------------------------------------------------ //
+  // Stream players. MSE over WebSocket speaking go2rtc's protocol via the
+  // app proxy; MJPEG <img> for browsers without Media Source Extensions.
+  // Each takes the cell's element and an onState(state, text, detail)
+  // callback. A stale frame at a gate is worse than a visible error, so
+  // any doubt reports 'down'.
+  // ------------------------------------------------------------------ //
+  const CODECS = 'avc1.640029,avc1.64002A,avc1.640033,hvc1.1.6.L153.B0,mp4a.40.2,mp4a.40.5,flac,opus';
+  const MS = window.ManagedMediaSource || window.MediaSource;
+
+  class MseStream {
+    constructor(src, video, onState) {
+      this.src = src; this.video = video; this.onState = onState;
+      this.ws = null; this.ms = null; this.sb = null;
+      this.queue = []; this.lastData = 0; this.retry = 0; this.closed = false; this.watchdog = null; this._timer = null;
+    }
+    url() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${proto}//${location.host}/api/stream/ws?src=${encodeURIComponent(this.src)}`;
+    }
+    start() { this.closed = false; this.connect(); this.watchdog = setInterval(() => this.tick(), 1000); }
+    stop() { this.closed = true; clearInterval(this.watchdog); clearTimeout(this._timer); this._timer = null; this.teardown(); }
+    teardown() {
+      if (this.ws) { this.ws.onclose = null; try { this.ws.close(); } catch (_) {} this.ws = null; }
+      this.sb = null; this.queue = [];
+      if (this.ms) { try { if (this.ms.readyState === 'open') this.ms.endOfStream(); } catch (_) {} this.ms = null; }
+      try { this.video.removeAttribute('src'); this.video.load(); } catch (_) {}
+    }
+    connect() {
+      if (this.closed) return;
+      this.teardown();
+      this.onState('connecting', this.retry ? 'Reconnecting' : 'Connecting', 'WAITING FOR THE INTERCOM STREAM');
+      const ms = new MS(); this.ms = ms;
+      if (window.ManagedMediaSource && ms instanceof window.ManagedMediaSource) this.video.disableRemotePlayback = true;
+      this.video.src = URL.createObjectURL(ms);
+      const ws = new WebSocket(this.url()); ws.binaryType = 'arraybuffer'; this.ws = ws;
+      const hello = () => ws.send(JSON.stringify({ type: 'mse', value: CODECS }));
+      ms.addEventListener('sourceopen', () => {
+        if (this.ws !== ws) return;
+        if (ws.readyState === WebSocket.OPEN) hello(); else ws.addEventListener('open', hello, { once: true });
+      }, { once: true });
+      ws.onmessage = (ev) => {
+        if (typeof ev.data === 'string') {
+          let msg; try { msg = JSON.parse(ev.data); } catch (_) { return; }
+          if (msg.type === 'mse') {
+            try {
+              this.sb = ms.addSourceBuffer(msg.value); this.sb.mode = 'segments';
+              this.sb.addEventListener('updateend', () => this.flush());
+            } catch (e) {
+              this.onState('down', 'Unsupported', `THIS BROWSER CANNOT PLAY ${msg.value}`);
+              this.closed = true; this.teardown();
+            }
+          } else if (msg.type === 'error') {
+            this.onState('down', 'Stream down', String(msg.value || 'STREAM SERVICE ERROR').toUpperCase());
+          }
+          return;
+        }
+        this.lastData = Date.now(); this.retry = 0;
+        this.queue.push(ev.data); this.flush();
+      };
+      ws.onclose = () => this.scheduleReconnect();
+      ws.onerror = () => {};
+    }
+    flush() {
+      if (!this.sb || this.sb.updating || !this.queue.length || !this.ms || this.ms.readyState !== 'open') return;
+      try { this.sb.appendBuffer(this.queue.shift()); } catch (e) { this.scheduleReconnect(); }
+    }
+    tick() {
+      if (this.closed) return;
+      const v = this.video, now = Date.now();
+      if (this.lastData && now - this.lastData > 5000) {
+        this.onState('down', 'Stream down', 'NO VIDEO RECEIVED FOR A FEW SECONDS');
+        this.scheduleReconnect(); return;
+      }
+      if (v.readyState >= 3 && !v.paused && this.lastData && now - this.lastData < 3000) this.onState('live', 'Live', '');
+      try {
+        const b = v.buffered;
+        if (b.length) {
+          const end = b.end(b.length - 1);
+          if (end - v.currentTime > 2.5) v.currentTime = end - 0.5;
+          if (this.sb && !this.sb.updating && end - b.start(0) > 30) this.sb.remove(b.start(0), end - 15);
+        }
+      } catch (_) {}
+      if (v.paused && v.readyState >= 2) v.play().catch(() => {});
+    }
+    scheduleReconnect() {
+      if (this.closed || this._timer) return;
+      this.lastData = 0;
+      const delay = Math.min(1000 * 2 ** this.retry, 10000); this.retry += 1;
+      this._timer = setTimeout(() => { this._timer = null; this.connect(); }, delay);
+    }
+  }
+
+  class MjpegStream {
+    constructor(src, video, onState) { this.src = src; this.host = video.parentElement; this.onState = onState; this.img = null; this.timer = null; video.remove(); }
+    start() {
+      const img = document.createElement('img'); img.className = 'mjpeg'; img.alt = 'Live view';
+      img.onload = () => this.onState('live', 'Live', '');
+      img.onerror = () => { this.onState('down', 'Stream down', 'COULD NOT LOAD THE VIDEO'); this.timer = setTimeout(() => this.start(), 3000); };
+      this.onState('connecting', 'Connecting', 'WAITING FOR THE INTERCOM STREAM');
+      img.src = `/api/stream/mjpeg?src=${encodeURIComponent(this.src)}&t=${Date.now()}`;
+      if (this.img) this.img.remove();
+      this.img = img; this.host.insertBefore(img, this.host.querySelector('.name'));
+    }
+    stop() { clearTimeout(this.timer); if (this.img) { this.img.src = ''; this.img.remove(); this.img = null; } }
+  }
+
+  // ------------------------------------------------------------------ //
+  // Cameras and cells. v1 has one; the grid, tap-to-fill and Grid/Back
+  // button from the design light up once more are configured.
+  // ------------------------------------------------------------------ //
+  let cameras = [{ id: 'intercom', name: 'Gate intercom', gate: true }];
+  const cells = new Map();     // id -> { el, video, stream, state }
+  let filled = null;           // camera id shown alone, or null for grid
+
+  function makeCell(cam, index) {
+    const el = document.createElement('figure');
+    el.className = 'cell'; el.dataset.id = cam.id; el.dataset.state = 'connecting';
+    el.innerHTML = `
+      <div class="grid"></div>
+      <video autoplay muted playsinline></video>
+      <div class="name"><span class="dot"></span><span>${cam.name}</span></div>
+      <div class="code">CAM ${String(index + 1).padStart(2, '0')}</div>
+      <div class="overlay"><div class="kicker">Connecting</div><div class="mono"></div></div>`;
+    const video = el.querySelector('video');
+    const entry = { cam, el, video, stream: null, state: 'connecting' };
+    const onState = (state, text, why) => {
+      entry.state = state; el.dataset.state = state;
+      el.querySelector('.overlay .kicker').textContent = text;
+      el.querySelector('.overlay .mono').textContent = why || '';
+      if (state === 'down' && why && why.startsWith('WAITING')) el.querySelector('.overlay .mono').textContent = '';
+      refreshHeader();
+    };
+    entry.onState = onState;
+    entry.stream = MS ? new MseStream(cam.id, video, onState) : new MjpegStream(cam.id, video, onState);
+    el.addEventListener('click', () => {
+      if (swiped) return;
+      if (immersive) goFullscreen();
+      else if (cameras.length > 1) fill(filled ? null : cam.id);
+    });
+    cells.set(cam.id, entry);
+    return el;
+  }
+
+  function visibleIds() { return filled ? [filled] : cameras.map((c) => c.id); }
+  function syncStreams() {
+    const vis = new Set(visibleIds());
+    for (const [id, e] of cells) {
+      if (vis.has(id) && !e.running) { e.running = true; e.stream.start(); }
+      if (!vis.has(id) && e.running) { e.running = false; e.stream.stop(); e.onState('connecting', 'Connecting', ''); }
+    }
+  }
+  function fill(id) {
+    filled = id;
+    cellsEl.classList.toggle('filled', !!id);
+    for (const [cid, e] of cells) e.el.classList.toggle('active', cid === id);
+    pager.replaceChildren(...(cameras.length > 1 ? cameras.map((c) => {
+      const dot = document.createElement('i'); if (c.id === id) dot.className = 'on'; return dot;
+    }) : []));
+    syncStreams(); refreshHeader();
+  }
+  function refreshHeader() {
+    const single = cameras.length === 1;
+    const focus = filled ? cells.get(filled) : (single ? cells.get(cameras[0].id) : null);
+    titleEl.textContent = focus ? focus.cam.name : 'All cameras';
+    viewToggle.textContent = filled ? 'Back' : 'Grid';
+    viewToggle.classList.toggle('hidden', single);
+    // Header live indicator summarises the visible cells.
+    const states = visibleIds().map((id) => cells.get(id).state);
+    const st = states.includes('down') ? 'down' : states.includes('connecting') ? 'connecting' : 'live';
+    live.dataset.state = st;
+    liveText.textContent = st === 'live' ? 'Live' : st === 'down' ? 'Stream down' : 'Connecting';
+  }
+  viewToggle.addEventListener('click', () => fill(filled ? null : cameras[0].id));
+
+  // ------------------------------------------------------------------ //
+  // Immersive: with the phone on its side the active camera takes the
+  // whole screen and the gate button floats over it. Swiping sideways
+  // steps through the cameras (also in portrait, when one is filled).
+  // ------------------------------------------------------------------ //
+  const landscape = window.matchMedia(
+    '(orientation: landscape) and (pointer: coarse), (orientation: landscape) and (max-height: 540px)');
+  let immersive = false, gridBehind = false;
+
+  function setImmersive(on) {
+    if (on === immersive) return;
+    immersive = on;
+    document.body.classList.toggle('immersive', on);
+    if (on) {
+      gridBehind = !filled;
+      if (!filled) fill(cameras[0].id);
+    } else {
+      if (gridBehind) fill(null);
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    }
+  }
+  // Rotating is not a user gesture, so the browser's own bars stay until a
+  // tap on the video lets us ask for real fullscreen (no-op on iPhone).
+  function goFullscreen() {
+    const root = document.documentElement;
+    if (document.fullscreenElement || !root.requestFullscreen) return;
+    root.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+  }
+
+  function animate(el, cls) {
+    el.classList.remove('from-left', 'from-right', 'edge-left', 'edge-right');
+    void el.offsetWidth;
+    el.classList.add(cls);
+  }
+  function step(dir) {
+    if (!filled) return;
+    if (cameras.length < 2) { animate(cells.get(filled).el, dir > 0 ? 'edge-right' : 'edge-left'); return; }
+    const i = cameras.findIndex((c) => c.id === filled);
+    const next = cameras[(i + dir + cameras.length) % cameras.length];
+    fill(next.id);
+    animate(cells.get(next.id).el, dir > 0 ? 'from-right' : 'from-left');
+  }
+
+  let swipe = null, swiped = false;
+  cellsEl.addEventListener('pointerdown', (e) => {
+    swiped = false;
+    swipe = e.isPrimary ? { x: e.clientX, y: e.clientY } : null;   // a second finger is a pinch
+  });
+  cellsEl.addEventListener('pointerup', (e) => {
+    if (!swipe || !e.isPrimary) return;
+    const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+    swipe = null;
+    if (Math.abs(dx) < 48 || Math.abs(dx) < 2 * Math.abs(dy)) return;
+    swiped = true;   // the click that follows is not a tap
+    step(dx < 0 ? 1 : -1);
+  });
+  cellsEl.addEventListener('pointercancel', () => { swipe = null; });
+
+  // Server-side status: reports the intercom being offline even when the
+  // websocket is happily connected to an idle go2rtc.
+  async function pollStatus() {
+    await Promise.all(visibleIds().map(async (id) => {
+      try {
+        const r = await fetch(`/api/stream/status?src=${encodeURIComponent(id)}`, { cache: 'no-store' });
+        const s = await r.json();
+        const e = cells.get(id);
+        if (!e) return;
+        if (!s.device_reachable) e.onState('down', s.gate ? 'Intercom offline' : 'Camera offline', 'NOT ANSWERING ON THE NETWORK');
+        else if (!s.go2rtc_up) e.onState('down', 'Stream service down', 'GO2RTC IS NOT RUNNING');
+      } catch (_) {}
+    }));
+  }
+
+  // ------------------------------------------------------------------ //
+  // Hold-to-open. A single mis-tap must not open the gate to the street.
+  // ------------------------------------------------------------------ //
+  const HOLD_MS = 1000;
+  let holdStart = 0, holdRaf = 0, busy = false, cooldownTimer = 0;
+  const clock = () => new Date().toTimeString().slice(0, 8);
+
+  function setGate(state, label) {
+    gate.dataset.state = state; gate.style.setProperty('--p', '0');
+    if (label !== undefined) gateLabel.textContent = label;
+  }
+  function setStatus(status, meta) { statusline.textContent = `GATE — ${status}${meta ? ' · ' + meta : ''}`; }
+  function setDetail(kind, text) { detail.dataset.kind = kind || ''; detail.textContent = text || ''; }
+
+  function beginHold(ev) {
+    if (busy || gate.dataset.state !== 'idle') return;
+    ev.preventDefault();
+    gate.setPointerCapture?.(ev.pointerId);
+    holdStart = performance.now();
+    setGate('holding', 'Keep holding');
+    setStatus('CONFIRMING', 'KEEP HOLDING');
+    const step = (t) => {
+      const p = Math.min(1, (t - holdStart) / HOLD_MS);
+      gate.style.setProperty('--p', p.toFixed(3));
+      if (p >= 1) { fire(); return; }
+      holdRaf = requestAnimationFrame(step);
+    };
+    holdRaf = requestAnimationFrame(step);
+  }
+  function cancelHold() {
+    if (gate.dataset.state !== 'holding') return;
+    cancelAnimationFrame(holdRaf);
+    setGate('idle', 'Open gate'); setStatus('READY', 'HOLD TO OPEN');
+  }
+  gate.addEventListener('pointerdown', beginHold);
+  gate.addEventListener('pointerup', cancelHold);
+  gate.addEventListener('pointercancel', cancelHold);
+  gate.addEventListener('pointerleave', cancelHold);
+  gate.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  async function fire() {
+    cancelAnimationFrame(holdRaf);
+    busy = true;
+    setGate('pending', 'Sending'); setStatus('SENDING', clock()); setDetail('', '');
+    if (navigator.vibrate) navigator.vibrate(30);
+
+    let data = null, status = 0;
+    try {
+      const r = await fetch('/api/gate/open', { method: 'POST', cache: 'no-store' });
+      status = r.status; data = await r.json().catch(() => null);
+    } catch (_) {}
+
+    if (data && data.ok) {
+      // The intercom only pulses a relay that other openers share, and the
+      // gate controller steps open → stop → close on each pulse. The gate's
+      // position cannot be read, so say what was done, never where it is.
+      setGate('sent', 'Signal sent'); setStatus('SIGNAL SENT', clock());
+      setDetail('ok', 'RELAY PULSED. GATE POSITION IS NOT KNOWN — CHECK THE VIDEO.');
+      if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+      startCooldown(data.cooldown || 5, 'sent'); return;
+    }
+    const reason = data && data.reason;
+    if (reason === 'cooldown') {
+      setStatus('COOLDOWN', 'JUST SENT'); setDetail('', 'WAIT A MOMENT BEFORE TRYING AGAIN');
+      startCooldown(data.retry_after || 3, 'cooldown');
+    } else if (reason === 'rate_limited') {
+      setStatus('RATE LIMITED', `RETRY IN ${Math.ceil(data.retry_after || 30)}S`); setDetail('error', 'TOO MANY ATTEMPTS');
+      startCooldown(data.retry_after || 30, 'cooldown');
+    } else if (reason === 'device_unreachable') {
+      setGate('failed', 'Intercom offline'); setStatus('FAILED', 'INTERCOM OFFLINE');
+      setDetail('error', 'THE INTERCOM IS NOT ANSWERING. NO SIGNAL REACHED THE GATE.');
+      startCooldown(data.cooldown || 5, 'failed');
+    } else if (reason === 'device_error') {
+      setGate('failed', 'Not sent'); setStatus('FAILED', 'INTERCOM REFUSED');
+      setDetail('error', (data.detail || 'THE INTERCOM REFUSED THE COMMAND').toUpperCase());
+      startCooldown(data.cooldown || 5, 'failed');
+    } else {
+      setGate('failed', 'Failed'); setStatus('FAILED', status ? `HTTP ${status}` : 'APP UNREACHABLE');
+      setDetail('error', status ? 'UNEXPECTED RESPONSE FROM THE APP' : 'COULD NOT REACH THE INTERCOM APP');
+      startCooldown(5, 'failed');
+    }
+  }
+
+  function startCooldown(seconds, keep) {
+    clearInterval(cooldownTimer);
+    const until = Date.now() + seconds * 1000;
+    const render = () => {
+      const left = Math.max(0, (until - Date.now()) / 1000);
+      if (left <= 0) {
+        clearInterval(cooldownTimer); busy = false;
+        setGate('idle', 'Open gate'); setStatus('READY', 'HOLD TO OPEN');
+        return;
+      }
+      if (keep === 'cooldown') { setGate('cooldown', `Wait ${Math.ceil(left)}s`); }
+      else { statusline.textContent = statusline.textContent.replace(/ · READY IN \d+S$/, '') + ` · READY IN ${Math.ceil(left)}S`; }
+    };
+    render();
+    cooldownTimer = setInterval(render, 250);
+  }
+
+  // ------------------------------------------------------------------ //
+  async function init() {
+    try {
+      const r = await fetch('/api/cameras', { cache: 'no-store' });
+      const d = await r.json();
+      if (Array.isArray(d.cameras) && d.cameras.length) cameras = d.cameras;
+    } catch (_) {}
+    cellsEl.dataset.count = String(Math.min(cameras.length, 3));
+    cameras.forEach((cam, i) => cellsEl.appendChild(makeCell(cam, i)));
+    if (!cameras.some((c) => c.gate)) { gate.closest('.actions').classList.add('hidden'); }
+    fill(cameras.length === 1 ? cameras[0].id : null);
+    setImmersive(landscape.matches);
+    landscape.addEventListener('change', (e) => setImmersive(e.matches));
+    pollStatus(); setInterval(pollStatus, 10000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      for (const e of cells.values()) if (e.running) { e.stream.stop(); e.stream.start(); }
+      pollStatus();
+    });
+  }
+  init();
+})();
+</script>
+</body>
+</html>

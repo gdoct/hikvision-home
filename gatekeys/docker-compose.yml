@@ -1,0 +1,53 @@
+# Runtime definition for gatekeys — see README.md and ../docs/ARCHITECTURE.md.
+#
+# One service, bridge network, published on the trusted LAN address only.
+# Deliberately separate from ../intercom: that app opens the gate and must
+# survive this one being restarted or broken. The contract between them is a
+# single POST /api/verify with a shared secret.
+#
+# Settings come from .env (keep it 0600; it is git-ignored).
+name: gatekeys
+
+services:
+  gatekeys:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gatekeys:latest
+    container_name: gatekeys
+    restart: unless-stopped
+    ports:
+      # BIND_ADDR is the host address to publish on. On a host with an
+      # interface on the camera network, set it to the trusted LAN address so
+      # this page never appears on the camera side. Put a reverse proxy in
+      # front of it for TLS.
+      - "${BIND_ADDR:-0.0.0.0}:${PORT:-8097}:8097"
+    environment:
+      GATEKEYS_USER: ${GATEKEYS_USER:?set GATEKEYS_USER in .env}
+      GATEKEYS_PASSWORD: ${GATEKEYS_PASSWORD:?set GATEKEYS_PASSWORD in .env}
+      GATEKEYS_SECRET_KEY: ${GATEKEYS_SECRET_KEY:?set GATEKEYS_SECRET_KEY in .env}
+      GATEKEYS_VERIFY_TOKEN: ${GATEKEYS_VERIFY_TOKEN:?set GATEKEYS_VERIFY_TOKEN in .env}
+      GATEKEYS_SESSION_HOURS: ${GATEKEYS_SESSION_HOURS:-12}
+      GATEKEYS_DB: /data/gatekeys.db
+      TZ: ${TZ:-UTC}
+    volumes:
+      # Holds the codes themselves: as sensitive as a drawer of spare keys.
+      - gatekeys-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen("http://localhost:8097/api/health")
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  gatekeys-data:

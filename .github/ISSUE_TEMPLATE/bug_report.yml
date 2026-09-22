@@ -1,0 +1,56 @@
+name: Bug report
+description: Something does not work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not report security problems here — see
+        [SECURITY.md](../blob/main/SECURITY.md) for private reporting.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what happened, and what you expected instead.
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: Intercom or camera model, and its firmware version if you know it.
+      placeholder: Hikvision DS-KV…, firmware V2.2.x
+    validations:
+      required: true
+
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app
+      options: [intercom, gatekeys, both, not sure]
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Output of `./build.sh logs` around the problem, and `./build.sh check`.
+        **Remove your passwords, tokens and addresses first.**
+      render: shell
+
+  - type: textarea
+    id: probe
+    attributes:
+      label: Probe output
+      description: If it is about video or the gate button, `./build.sh probe` — with credentials removed.
+      render: shell
+
+  - type: input
+    id: host
+    attributes:
+      label: Host
+      placeholder: Debian 12 on an N100 mini PC, Docker 27.x

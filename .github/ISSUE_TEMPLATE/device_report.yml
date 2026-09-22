@@ -1,0 +1,37 @@
+name: Device report
+description: Tell us what your intercom or camera needed — the most useful kind of issue
+labels: [hardware]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hikvision families differ enough that every working configuration is
+        real documentation. Thank you for sending one.
+
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      placeholder: HiLook HWI-B121H-C
+    validations:
+      required: true
+
+  - type: input
+    id: rtsp
+    attributes:
+      label: RTSP path that worked
+      placeholder: /Streaming/Channels/101
+    validations:
+      required: true
+
+  - type: input
+    id: door
+    attributes:
+      label: Door id that worked
+      placeholder: "1, or n/a for a plain camera"
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Account rights it needed, settings you had to enable, things that misled you.

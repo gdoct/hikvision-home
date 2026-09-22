@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/gdoct/hikvision-home/security/advisories/new
+    about: Report privately instead of opening an issue.
+  - name: Installation help
+    url: https://github.com/gdoct/hikvision-home/blob/main/docs/INSTALL.md
+    about: The install guide has a troubleshooting section; start there.
