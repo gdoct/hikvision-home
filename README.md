@@ -1,11 +1,15 @@
 # hikvision-home
 
-Two small self-hosted apps for a Hikvision intercom at a gate or front door:
+## TL;DR version 
+This app allows opening a hikvision controlled gate with your smartphone. It also allows you to generate qr codes that visitors can show to the camera at the gate. While a person is detected, it will scan 2--4 frames per seconds for qr codes, and when a valid qr code is presented, the gate will open. This will only work on the local wifi, no cloud.
+
+## Long version
+These are two small self-hosted apps for a Hikvision intercom at a gate or front door:
 one app to monitor the house cameras, and open or close the gate when either a button is pressed in the app, or when a valid qr code is shown to the camera. The second app is responsible for handing out QR codes to people who should be
 able to let themselves in. So you can generate a qr code for a visitor with time or date restrictions, and if they hold it in front of the intercom and it is valid, the gate will open.
 
 No cloud, no vendor app, no account. Everything runs in Docker on your own
-box, and the credentials for your door hardware never leave it.
+box, and the credentials for your door hardware never leave it. The app is created as a PWA so you can put it on the home screen. 
 
 ![example network setup](docs/example_network.png)
 
